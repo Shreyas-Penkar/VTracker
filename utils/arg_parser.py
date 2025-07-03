@@ -1,5 +1,6 @@
-import argparse
+import argparse, sys
 from datetime import datetime
+from utils.colors import *
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -9,9 +10,11 @@ def parse_args():
 
     current_year = datetime.now().year
     if not (2009 <= args.year <= current_year):
-        raise ValueError("Year must be between 2009 and the current year.")
+        red("❌ Year must be between 2009 and the current year.")
+        sys.exit(1)
     if not (1 <= args.month <= 12):
-        raise ValueError("Month must be between 1 and 12.")
+        red("❌ Month must be between 1 and 12.")
+        sys.exit(1)
 
     return args.year, args.month
 
