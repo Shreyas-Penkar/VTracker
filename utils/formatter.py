@@ -15,6 +15,6 @@ def print_vulnerabilities(VULNS):
         line("Bounty", v['bounty'])
         line("Description", v['description'])
         line("Reported by", v['reported_by'])
-        line("V8 Commit Link", v['git_link'])
+        line("Commit Link", v['git_link'])
 
         print("\n" + "-" * 60 + "\n")

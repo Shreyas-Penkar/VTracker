@@ -50,15 +50,25 @@ def main():
         if git_log_link:
             magenta("🔗 Chromium Git Log Link: " + git_log_link[0])
             print()
-            links = fetch_and_extract_v8_logs(git_log_link[0])
-            for link in links:
-                print(f"  {link}")
-                commit_links = extract_commit_links(link)
-                for commit_link in commit_links:
-                    bug_ids = extract_bug_ids_from_commit_url(commit_link)
-                    if bug_ids is not None:
-                        for bug_id in bug_ids:
-                            BUG_ID[bug_id] = commit_link
+
+            links= fetch_and_extract_v8_logs(git_log_link[0])
+            bug_ids_dict = extract_bug_id_commit_map_from_gitlog_url(git_log_link[0])
+            BUG_ID = BUG_ID | bug_ids_dict
+
+            if links != []:
+                magenta("🔗 V8 Git Log Links: ")
+                print()
+                for link in links:
+                    print(f"  {link}")
+                    commit_links = extract_commit_links(link)
+                    for commit_link in commit_links:
+                        bug_ids = extract_bug_ids_from_commit_url(commit_link)
+                        if bug_ids is not None:
+                            for bug_id in bug_ids:
+                                BUG_ID[bug_id] = commit_link
+            else:
+                red("❌ No V8 Commit links found.")
+
         else:
             red("❌ No Git Log link found.")
 

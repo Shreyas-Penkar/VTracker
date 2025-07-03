@@ -1,3 +1,4 @@
+from collections import defaultdict
 import re, sys
 import requests, socket
 from bs4 import BeautifulSoup
@@ -54,6 +55,45 @@ def extract_commit_links(v8_log_url):
     ]
     return sorted(set(links))
 
+
+def extract_bug_id_commit_map_from_gitlog_url(git_log_url):
+    try:
+        resp = requests.get(git_log_url)
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        print(f"❌ Failed to fetch: {e}")
+        return None
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    bug_commit_map = {}
+
+    # Find all commits in the log
+    commits = soup.find_all("li", class_="CommitLog-item")
+    for commit in commits:
+        # Extract commit hash URL
+        commit_hash_tag = commit.find("td", class_="sha1")
+        if not commit_hash_tag:
+            continue
+        commit_link = commit_hash_tag.find("a")
+        if not commit_link or not commit_link["href"]:
+            continue
+
+        commit_url = "https://chromium.googlesource.com" + commit_link["href"]
+
+        # Extract commit message (where Bug: lines reside)
+        message_pre = commit.find("pre", class_="u-pre u-monospace MetadataMessage")
+        if not message_pre:
+            continue
+        message_text = message_pre.get_text()
+
+        # Find bug IDs
+        bug_lines = re.findall(r'(?:Bug|Fixed):\s*([0-9,\s]+)', message_text)
+        for line in bug_lines:
+            bug_ids = re.split(r'[,\s]+', line)
+            for bug_id in filter(None, bug_ids):
+                bug_commit_map[bug_id] = commit_url  # only one URL per bug ID
+    return bug_commit_map
+
 def fetch_and_extract_v8_logs(git_log_url):
     res = requests.get(git_log_url)
     if res.status_code != 200:
@@ -62,4 +102,6 @@ def fetch_and_extract_v8_logs(git_log_url):
 
     html = res.text
     pattern = re.compile(r"https://chromium\.googlesource\.com/v8/v8\.git/\+log/[^\"'<>\s]+")
+
+    
     return sorted(set(re.findall(pattern, html)))
