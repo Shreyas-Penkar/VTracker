@@ -65,7 +65,7 @@ def extract_bug_id_commit_map_from_gitlog_url(git_log_url):
         return None
 
     soup = BeautifulSoup(resp.text, "html.parser")
-    bug_commit_map = {}
+    bug_commit_map = defaultdict(list)  # Key → list of commit URLs
 
     # Find all commits in the log
     commits = soup.find_all("li", class_="CommitLog-item")
@@ -91,8 +91,11 @@ def extract_bug_id_commit_map_from_gitlog_url(git_log_url):
         for line in bug_lines:
             bug_ids = re.split(r'[,\s]+', line)
             for bug_id in filter(None, bug_ids):
-                bug_commit_map[bug_id] = commit_url  # only one URL per bug ID
-    return bug_commit_map
+                # Avoid duplicate commit URLs per bug_id
+                if commit_url not in bug_commit_map[bug_id]:
+                    bug_commit_map[bug_id].append(commit_url)
+
+    return dict(bug_commit_map)
 
 def fetch_and_extract_v8_logs(git_log_url):
     res = requests.get(git_log_url)

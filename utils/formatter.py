@@ -15,6 +15,20 @@ def print_vulnerabilities(VULNS):
         line("Bounty", v['bounty'])
         line("Description", v['description'])
         line("Reported by", v['reported_by'])
-        line("Commit Link", v['git_link'])
+
+        # Format git_link as a clean list
+        git_links = v.get('git_link', [])
+        if isinstance(git_links, str):
+            git_links = [git_links]  # wrap as list
+
+        if git_links:
+            print(f"{colored('Commit Links:', 'cyan'):<18} {colored(git_links[0], 'white')}")
+            for link in git_links[1:]:
+                print(f"{'':<13} {colored(link, 'white')}")
+        else:
+            line("Commit Links", "None")
+
+        line("Chromium Issue", v['chromium_issue'])
 
         print("\n" + "-" * 60 + "\n")
+
